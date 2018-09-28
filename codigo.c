@@ -6,17 +6,18 @@
 /* Funções do programa */
 float **alocarMatriz(int linhas, int colunas);
 int carrega(float **matriz, char nome_arq[]);
-int localiza(float **matriz, int valor);
-int imprimeSaida(float **matriz, int valor);
+int localizaNaMatriz(float **matriz, int valor);
+int imprimeMatriz(float **matriz, int linhas, int colunas);
 
 /* Principal */
 int main(){
     int linhas, colunas, threads, valor, erro;
     char nome_arq[50];
-    float **matriz;
+    float **matriz;    
 
+    /* pegando dados do usuario */
     printf("\nDigite o nome do arquivo de dados: ");
-    fgets(nome_arq, 50, stdin);
+    scanf("%s", nome_arq);
 
     printf("\nDigite a quantidade de Threads a serem utilizadas: ");
     scanf("%d", &threads);
@@ -36,6 +37,13 @@ int main(){
     if(matriz == NULL){
         printf("\nERRO: nao foi possivel alocar!\n");
     }
+
+    /* funcao que carrega dados do arquivo para a matriz */
+    carrega(matriz, nome_arq);
+
+    /* imprimindo a matriz */
+    imprimeMatriz(matriz, linhas, colunas);
+
     
     return 0;
 }
@@ -66,3 +74,37 @@ float **alocarMatriz(int linhas, int colunas){
 }
 /* ------------------------------------------------------------------------- */
 
+int carrega(float **matriz, char nome_arq[]){
+    int linhas, colunas;
+
+    /* Abrindo arquivo para leitura */
+    FILE* fp = fopen(nome_arq,"r");    
+    if(fp == NULL){
+        printf("\nERRO: Arquivo não encontrado\n");
+        return 1;
+    }
+
+    fscanf(fp, "%d %d", &linhas, &colunas);
+    printf("\n%d %d\n", linhas, colunas);
+
+    for(int i = 0; i < linhas; i++){
+        for(int k = 0; k < colunas; k++){
+            fscanf(fp ,"%f", &matriz[i][k]);
+        }
+    }
+
+    fclose(fp);
+
+    return 0;
+}
+
+
+int imprimeMatriz(float **matriz, int linhas, int colunas){
+
+    for(int i = 0; i < linhas; i++){
+        printf("\n");
+        for(int k = 0; k < colunas; k++){
+            printf("%.2f ", matriz[i][k]);
+        }
+    }
+}
