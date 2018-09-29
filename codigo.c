@@ -5,15 +5,15 @@
 
 /* Funções do programa */
 float **alocarMatriz(int linhas, int colunas);
-int carrega(float **matriz, char nome_arq[]);
-int localizaNaMatriz(float **matriz, int valor);
+int carrega(float **matriz, char nome_arq[], int linhas, int colunas);
+int localizaNaMatriz(float **matriz, float valor, int linhas, int colunas);
 int imprimeMatriz(float **matriz, int linhas, int colunas);
 
 /* Principal */
 int main(){
-    int linhas, colunas, threads, valor, erro;
+    int linhas, colunas, threads, erro;
     char nome_arq[50];
-    float **matriz;    
+    float **matriz, valor = 0;    
 
     /* pegando dados do usuario */
     printf("\nDigite o nome do arquivo de dados: ");
@@ -29,7 +29,7 @@ int main(){
     scanf("%d", &colunas);
 
     printf("\nDigite o valor a ser buscado na matriz: ");
-    scanf("%d", &valor);
+    scanf("%f", &valor);
 
     /* Chamando funcao que aloca matriz e verificando se a alocacao
     foi bem sucedida */
@@ -39,12 +39,15 @@ int main(){
     }
 
     /* funcao que carrega dados do arquivo para a matriz */
-    carrega(matriz, nome_arq);
+    carrega(matriz, nome_arq, linhas, colunas);
 
-    /* imprimindo a matriz */
-    imprimeMatriz(matriz, linhas, colunas);
+    /* imprimindo a matriz 
+    imprimeMatriz(matriz, linhas, colunas);*/
 
-    
+    localizaNaMatriz(matriz, valor, linhas, colunas);
+
+
+    free(matriz);
     return 0;
 }
 
@@ -72,10 +75,10 @@ float **alocarMatriz(int linhas, int colunas){
     }
     return matriz;
 }
+
 /* ------------------------------------------------------------------------- */
 
-int carrega(float **matriz, char nome_arq[]){
-    int linhas, colunas;
+int carrega(float **matriz, char nome_arq[], int linhas, int colunas){
 
     /* Abrindo arquivo para leitura */
     FILE* fp = fopen(nome_arq,"r");    
@@ -84,13 +87,12 @@ int carrega(float **matriz, char nome_arq[]){
         return 1;
     }
 
-    fscanf(fp, "%d %d", &linhas, &colunas);
-    printf("\n%d %d\n", linhas, colunas);
-
+    /* Percorrendo os dados no arquivo e jogando na matriz */
     for(int i = 0; i < linhas; i++){
         for(int k = 0; k < colunas; k++){
             fscanf(fp ,"%f", &matriz[i][k]);
         }
+        fscanf(fp ,"\n");
     }
 
     fclose(fp);
@@ -98,6 +100,7 @@ int carrega(float **matriz, char nome_arq[]){
     return 0;
 }
 
+/* ------------------------------------------------------------------------- */
 
 int imprimeMatriz(float **matriz, int linhas, int colunas){
 
@@ -107,4 +110,31 @@ int imprimeMatriz(float **matriz, int linhas, int colunas){
             printf("%.2f ", matriz[i][k]);
         }
     }
+    printf("\n");
+}
+
+/* ------------------------------------------------------------------------- */
+
+int localizaNaMatriz(float **matriz, float valor, int linhas, int colunas){
+    /* variavel auxiliar para contar se o valor foi encontrado alguma vez ou não */
+    int aux = 0, k, i;
+
+    /* Percorre a matriz comparando com a variavel valor */
+    for(i = 0; i < linhas; i++){
+        for(k = 0; k < colunas; k++){
+            if(matriz[i][k] == valor){
+                printf("\nVALOR ENCONTRADO\nPosicao na matriz ==> linha %d, coluna %d\n", i, k);
+                aux++;
+            }
+        }
+    }
+
+    /* verifica se o valor foi encontrado pelo menos uma vez
+     * caso não, mostra mensagem informando que o valor
+     * não existe na matriz */
+    if(aux == 0){
+        printf("\nValor não foi encontrado na matriz!\n");
+    }
+
+    return 0;
 }
