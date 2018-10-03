@@ -11,9 +11,11 @@ int imprimeMatriz(float **matriz, int linhas, int colunas);
 
 /* Principal */
 int main(){
-    int linhas, colunas, threads, erro;
+    int linhas, colunas, threads, q;
     char nome_arq[50];
-    float **matriz, valor = 0;    
+    float **matriz, valor = 0;
+
+    do{  
 
     /* pegando dados do usuario */
     printf("\nDigite o nome do arquivo de dados: ");
@@ -45,9 +47,12 @@ int main(){
     imprimeMatriz(matriz, linhas, colunas);*/
 
     localizaNaMatriz(matriz, valor, linhas, colunas);
-
-
     free(matriz);
+
+    printf("\nDigite 1 para buscar novamente, e 0 para sair!\n");
+    scanf("%d", &q);
+    }
+    while(q == 1);
     return 0;
 }
 
