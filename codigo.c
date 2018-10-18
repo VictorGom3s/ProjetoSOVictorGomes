@@ -4,17 +4,19 @@
 #include <pthread.h>
 
 /* Funções do programa */
-float **alocarMatriz(int linhas, int colunas);
-int carrega(float **matriz, char nome_arq[], int linhas, int colunas);
-int localizaNaMatriz(float **matriz, float valor, int linhas, int colunas);
-int imprimeMatriz(float **matriz, int linhas, int colunas);
+float **alocarMatriz();
+void* carrega();
+void* localizaNaMatriz();
+int imprimeMatriz();
 
-/* Principal */
-int main(){
-    int linhas, colunas, threads, q;
+/*Variaveis globais */
+    int linhas, colunas, threads, q, erro;
     char nome_arq[50];
     float **matriz, valor = 0;
 
+/* Principal */
+int main(){
+    int i, k;
     do{  
 
     /* pegando dados do usuario */
@@ -33,32 +35,43 @@ int main(){
     printf("\nDigite o valor a ser buscado na matriz: ");
     scanf("%f", &valor);
 
+    pthread_t th[threads];
+    
     /* Chamando funcao que aloca matriz e verificando se a alocacao
     foi bem sucedida */
-    matriz = alocarMatriz(linhas, colunas);
+    matriz = alocarMatriz();
     if(matriz == NULL){
-        printf("\nERRO: nao foi possivel alocar!\n");
+       printf("\nERRO: nao foi possivel alocar!\n");
+    }
+    
+    /* funcao que carrega dados do arquivo para a matriz */
+   /* for(i = 0; i < 1; i++){
+        pthread_create(&(th[i]), NULL, carrega, NULL);
+        pthread_join(th[i], NULL);
+    }*/
+    carrega();
+
+    /* Threads */
+    for(k = 0; k < threads; k++){
+        pthread_create(&(th[k]), NULL, localizaNaMatriz, NULL);
+        pthread_join(th[k], NULL);
     }
 
-    /* funcao que carrega dados do arquivo para a matriz */
-    carrega(matriz, nome_arq, linhas, colunas);
-
-    /* imprimindo a matriz 
-    imprimeMatriz(matriz, linhas, colunas);*/
-
-    localizaNaMatriz(matriz, valor, linhas, colunas);
-    free(matriz);
+    /* ----------------------------------------------- */
 
     printf("\nDigite 1 para buscar novamente, e 0 para sair!\n");
     scanf("%d", &q);
     }
     while(q == 1);
+
+    //free(matriz);
+
     return 0;
 }
 
 /* ------------------------------------------------------------------------- */
 
-float **alocarMatriz(int linhas, int colunas){
+float **alocarMatriz(){
 
     float **matriz;
     /* alocando linhas */
@@ -83,13 +96,13 @@ float **alocarMatriz(int linhas, int colunas){
 
 /* ------------------------------------------------------------------------- */
 
-int carrega(float **matriz, char nome_arq[], int linhas, int colunas){
+void* carrega(){
 
     /* Abrindo arquivo para leitura */
     FILE* fp = fopen(nome_arq,"r");    
     if(fp == NULL){
         printf("\nERRO: Arquivo não encontrado\n");
-        return 1;
+        //return 1;
     }
 
     /* Percorrendo os dados no arquivo e jogando na matriz */
@@ -102,12 +115,12 @@ int carrega(float **matriz, char nome_arq[], int linhas, int colunas){
 
     fclose(fp);
 
-    return 0;
+    //return 0;
 }
 
 /* ------------------------------------------------------------------------- */
 
-int imprimeMatriz(float **matriz, int linhas, int colunas){
+int imprimeMatriz(){
 
     for(int i = 0; i < linhas; i++){
         printf("\n");
@@ -120,7 +133,7 @@ int imprimeMatriz(float **matriz, int linhas, int colunas){
 
 /* ------------------------------------------------------------------------- */
 
-int localizaNaMatriz(float **matriz, float valor, int linhas, int colunas){
+void* localizaNaMatriz(){
     /* variavel auxiliar para contar se o valor foi encontrado alguma vez ou não */
     int aux = 0, k, i;
 
@@ -141,5 +154,5 @@ int localizaNaMatriz(float **matriz, float valor, int linhas, int colunas){
         printf("\nValor não foi encontrado na matriz!\n");
     }
 
-    return 0;
+    //return 0;
 }
