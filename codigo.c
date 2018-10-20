@@ -37,6 +37,10 @@ int main(){
 
     pthread_t th[threads];
     
+    pthread_attr_t attr;
+
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     /* Chamando funcao que aloca matriz e verificando se a alocacao
     foi bem sucedida */
     matriz = alocarMatriz();
@@ -44,19 +48,17 @@ int main(){
        printf("\nERRO: nao foi possivel alocar!\n");
     }
     
-    /* funcao que carrega dados do arquivo para a matriz */
-   /* for(i = 0; i < 1; i++){
-        pthread_create(&(th[i]), NULL, carrega, NULL);
-        pthread_join(th[i], NULL);
-    }*/
-    carrega();
 
-    /* Threads */
-    for(k = 0; k < threads; k++){
-        pthread_create(&(th[k]), NULL, localizaNaMatriz, NULL);
-        pthread_join(th[k], NULL);
+    /* ------------------ Threads ---------------------*/
+    pthread_create(&th[0], &attr, carrega, NULL);
+    pthread_join(th[0], NULL);
+    for(k = 1; k < threads; k++){
+        pthread_create(&(th[k]), &attr, localizaNaMatriz, NULL);
     }
 
+    for(k = 1; k < threads; k++){
+        pthread_join(th[k], NULL);
+    }
     /* ----------------------------------------------- */
 
     printf("\nDigite 1 para buscar novamente, e 0 para sair!\n");
@@ -64,7 +66,9 @@ int main(){
     }
     while(q == 1);
 
-    //free(matriz);
+    free(matriz);
+
+    pthread_exit(NULL);
 
     return 0;
 }
@@ -102,7 +106,6 @@ void* carrega(){
     FILE* fp = fopen(nome_arq,"r");    
     if(fp == NULL){
         printf("\nERRO: Arquivo não encontrado\n");
-        //return 1;
     }
 
     /* Percorrendo os dados no arquivo e jogando na matriz */
@@ -114,8 +117,6 @@ void* carrega(){
     }
 
     fclose(fp);
-
-    //return 0;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -153,6 +154,6 @@ void* localizaNaMatriz(){
     if(aux == 0){
         printf("\nValor não foi encontrado na matriz!\n");
     }
+    pthread_exit(NULL);
 
-    //return 0;
 }
