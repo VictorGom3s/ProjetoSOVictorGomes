@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 /* Funções do programa */
 float **alocarMatriz();
@@ -17,6 +18,7 @@ int imprimeMatriz();
 /* Principal */
 int main(){
     int i, k;
+    struct timeval inicial, final;
     do{  
 
     /* pegando dados do usuario */
@@ -48,18 +50,25 @@ int main(){
        printf("\nERRO: nao foi possivel alocar!\n");
     }
     
+    carrega();
 
     /* ------------------ Threads ---------------------*/
-    pthread_create(&th[0], &attr, carrega, NULL);
-    pthread_join(th[0], NULL);
-    for(k = 1; k < threads; k++){
+    gettimeofday(&inicial, NULL);
+
+    
+    for(k = 0; k < threads; k++){
         pthread_create(&(th[k]), &attr, localizaNaMatriz, NULL);
     }
 
-    for(k = 1; k < threads; k++){
+    for(k = 0; k < threads; k++){
         pthread_join(th[k], NULL);
     }
+
+    gettimeofday(&final, NULL);
     /* ----------------------------------------------- */
+
+    puts("\nFIM DAS THREADS!!!\n");
+    printf("Tempo de execução com %d threads: %ld milisegundos", threads, (final.tv_usec-inicial.tv_usec)/1000);
 
     printf("\nDigite 1 para buscar novamente, e 0 para sair!\n");
     scanf("%d", &q);
