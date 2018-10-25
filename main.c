@@ -20,6 +20,7 @@ void* carregaVetorPrincipal(T_arq arquivos);
     int *vetorPrincipal;
     int qntArquivos = 0;
     int MAX = 0;
+    int indiceGlobal = 0;
 
 //     0       1      2       3       4         5
 //  ./multicat 16 arq1.in arq2.in arq3.in arqSaida.out
@@ -98,7 +99,7 @@ void* carrega(T_arq arquivos){
 
     while(fscanf(fp, "%d", &aux) != EOF){ 
         arquivos.vetor[i] = aux;
-        //printf(" %d (%d)\n", arquivos.vetor[i], aux);
+        printf(" %d (%d)\n", arquivos.vetor[i], aux);
         i++;
     }
     fclose(fp);
@@ -118,15 +119,20 @@ void* carregaVetorPrincipal(T_arq arquivos){
         vetorPrincipal = (int *)calloc(arquivos.qntValores, sizeof(int));
     }else{
         vetorPrincipal = (int *)realloc(arquivos.vetor, sizeof(int));
+        if(vetorPrincipal == NULL){
+            printf("ERRO NO REALLOC\n");
+            pthread_exit(NULL);
+        }
     }
 
     printf("-------------------------------------------\n");
     for(int i = 0; i < arquivos.qntValores; i++){
         MAX++;
-        vetorPrincipal[i] = arquivos.vetor[i];
-        //printf("%d (%d) ||| %d (%d)\n", vetorPrincipal[i], i, arquivos.vetor[i], i);
+        vetorPrincipal[indiceGlobal] = arquivos.vetor[i];
+        indiceGlobal++;
+        printf("%d (%d) ||| %d (%d)\n", vetorPrincipal[i], i, arquivos.vetor[i], i);
     }
-
+    
     quick(vetorPrincipal ,0 , MAX-1);
 
     fclose(fp);
@@ -163,6 +169,9 @@ void quick(int *a, int left, int right){
         quick(a, i, right);
     }
  }
+
+
+/* ---------------------------------- */
 
  void* imprimeVetorPrincipal(){
 
