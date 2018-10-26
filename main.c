@@ -22,6 +22,7 @@ void* alocaVetorPrincipal();
     int qntArquivos = 0;
     int indiceGlobal = 0;
     int qntValoresTotal = 0;
+    char arqSaida[50];
 
 //     0       1      2       3       4         5
 //  ./multicat 16 arq1.in arq2.in arq3.in arqSaida.out
@@ -34,9 +35,10 @@ int main(int argc, char const *argv[])
     }
     
     int threads = atoi(argv[1]);
-    qntArquivos = argc - 2;
+    qntArquivos = argc - 3;
     T_arq arquivos[qntArquivos];
-
+    strcpy(arqSaida, argv[argc-1]);
+    printf("saida: %s\n", arqSaida);
     printf("qntArquivos: %d\n", qntArquivos);
 
 
@@ -59,7 +61,7 @@ int main(int argc, char const *argv[])
     }
 
 
-    //imprimeVetorPrincipal();
+    imprimeVetorPrincipal();
     return 0;
 }
 
@@ -124,9 +126,7 @@ void* carregaVetorPrincipal(T_arq arquivos){
         vetorPrincipal[indiceGlobal] = arquivos.vetor[i];
         //printf("%d (%d) ||| %d (%d)\n", vetorPrincipal[indiceGlobal], indiceGlobal, arquivos.vetor[i], i);
         indiceGlobal++;
-    }
-    imprimeVetorPrincipal();
-    
+    }    
 
     fclose(fp);
     //pthread_exit(NULL);
@@ -183,10 +183,15 @@ void quick(int *a, int left, int right){
  void* imprimeVetorPrincipal(){
 
      quick(vetorPrincipal ,0 , indiceGlobal-1);
-     
-     printf("\nSAIDA:: \n");
+
+     FILE *fp = fopen(arqSaida, "w");
+     if(fp == NULL){
+         printf("ERRO\n");
+     }
 
      for(int i = 0; i < indiceGlobal; i++){
-         printf("%d (%d)\n", vetorPrincipal[i], i);
+         fprintf(fp, "%d\n", vetorPrincipal[i]);
      }
+
+     fclose(fp);
  }
