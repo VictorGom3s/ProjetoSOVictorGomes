@@ -15,12 +15,13 @@ void quick(int *a, int left, int right);
 void* imprimeVetorPrincipal();
 void* alocaVetor(T_arq *arquivos);
 void* carregaVetorPrincipal(T_arq arquivos);
+void* alocaVetorPrincipal();
 
 /* Variaveis globais */
     int *vetorPrincipal;
     int qntArquivos = 0;
-    int MAX = 0;
     int indiceGlobal = 0;
+    int qntValoresTotal = 0;
 
 //     0       1      2       3       4         5
 //  ./multicat 16 arq1.in arq2.in arq3.in arqSaida.out
@@ -38,24 +39,27 @@ int main(int argc, char const *argv[])
 
     printf("qntArquivos: %d\n", qntArquivos);
 
+
     /* Copiando o nome do arquivo para a struct */    
     for(int i = 0; i < qntArquivos; i++){
         strcpy(arquivos[i].nome, argv[i+2]);
     }
-
     for(int i = 0; i < qntArquivos; i++){
         alocaVetor(&arquivos[i]);
     }
     for(int i = 0; i < qntArquivos; i++){
-        carrega(arquivos[i]);
+        qntValoresTotal += arquivos[i].qntValores;
     }
-        
+    alocaVetorPrincipal();
+    for(int i = 0; i < qntArquivos; i++){
+        carrega(arquivos[i]);
+    }        
     for(int i = 0; i < qntArquivos; i++){
         carregaVetorPrincipal(arquivos[i]);
     }
 
 
-    imprimeVetorPrincipal();
+    //imprimeVetorPrincipal();
     return 0;
 }
 
@@ -99,7 +103,7 @@ void* carrega(T_arq arquivos){
 
     while(fscanf(fp, "%d", &aux) != EOF){ 
         arquivos.vetor[i] = aux;
-        printf(" %d (%d)\n", arquivos.vetor[i], aux);
+        //printf(" %d (%d)\n", arquivos.vetor[i], aux);
         i++;
     }
     fclose(fp);
@@ -114,30 +118,32 @@ void* carregaVetorPrincipal(T_arq arquivos){
         pthread_exit(NULL);
     }
 
-    if(vetorPrincipal == NULL){
-        printf("Vetor nao foi alocado ainda\n Alocando...\n");
-        vetorPrincipal = (int *)calloc(arquivos.qntValores, sizeof(int));
-    }else{
-        vetorPrincipal = (int *)realloc(arquivos.vetor, sizeof(int));
-        if(vetorPrincipal == NULL){
-            printf("ERRO NO REALLOC\n");
-            pthread_exit(NULL);
-        }
-    }
-
     printf("-------------------------------------------\n");
+
     for(int i = 0; i < arquivos.qntValores; i++){
-        MAX++;
         vetorPrincipal[indiceGlobal] = arquivos.vetor[i];
+        //printf("%d (%d) ||| %d (%d)\n", vetorPrincipal[indiceGlobal], indiceGlobal, arquivos.vetor[i], i);
         indiceGlobal++;
-        printf("%d (%d) ||| %d (%d)\n", vetorPrincipal[i], i, arquivos.vetor[i], i);
     }
+    imprimeVetorPrincipal();
     
-    quick(vetorPrincipal ,0 , MAX-1);
 
     fclose(fp);
     //pthread_exit(NULL);
 }
+
+/* ---------------------------------- */
+
+void* alocaVetorPrincipal(){
+    if(vetorPrincipal == NULL){
+        printf("Vetor nao foi alocado ainda\n Alocando...\n");
+        vetorPrincipal = (int *)calloc(qntValoresTotal, sizeof(int));
+    }else{
+        printf("ERRO\n");
+    }
+}
+
+/* ---------------------------------- */
 
 void quick(int *a, int left, int right){
     int i, j, x, y;
@@ -173,9 +179,14 @@ void quick(int *a, int left, int right){
 
 /* ---------------------------------- */
 
+
  void* imprimeVetorPrincipal(){
 
-     for(int i = 0; i < MAX; i++){
+     quick(vetorPrincipal ,0 , indiceGlobal-1);
+     
+     printf("\nSAIDA:: \n");
+
+     for(int i = 0; i < indiceGlobal; i++){
          printf("%d (%d)\n", vetorPrincipal[i], i);
      }
  }
