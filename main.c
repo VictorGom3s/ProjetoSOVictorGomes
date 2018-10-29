@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 typedef struct arquivo{
     char nome[50];
@@ -28,6 +29,7 @@ void* alocaVetorPrincipal();
 //  ./multicat 16 arq1.in arq2.in arq3.in arqSaida.out
 int main(int argc, char const *argv[])
 {   
+    struct timeval inicial, final;
     /* verificando quantidade de parametros */
     if(argc < 3){
         printf("Quantidade de parametros invalida\n");
@@ -38,8 +40,10 @@ int main(int argc, char const *argv[])
     qntArquivos = argc - 3;
     T_arq arquivos[qntArquivos];
     strcpy(arqSaida, argv[argc-1]);
-    printf("saida: %s\n", arqSaida);
-    printf("qntArquivos: %d\n", qntArquivos);
+
+    pthread_t th[threads];
+   /* printf("saida: %s\n", arqSaida);
+    printf("qntArquivos: %d\n", qntArquivos);*/
 
 
     /* Copiando o nome do arquivo para a struct */    
@@ -60,8 +64,22 @@ int main(int argc, char const *argv[])
         carregaVetorPrincipal(arquivos[i]);
     }
 
+    /* ------------------ Threads ---------------------*/
+    gettimeofday(&inicial, NULL);
 
-    imprimeVetorPrincipal();
+    for(int k = 0; k < threads; k++){
+        pthread_create(&(th[k]), NULL, imprimeVetorPrincipal, NULL);
+    }
+
+    for(int k = 0; k < threads; k++){
+        pthread_join(th[k], NULL);
+    }
+    //imprimeVetorPrincipal();
+
+    gettimeofday(&final, NULL);
+
+    printf("TEMPO DE PROCESSAMENTO: %ld microsegundos\n", (final.tv_usec-inicial.tv_usec));
+    /* ----------------------------------------------- */
     return 0;
 }
 
@@ -176,9 +194,7 @@ void quick(int *a, int left, int right){
     }
  }
 
-
 /* ---------------------------------- */
-
 
  void* imprimeVetorPrincipal(){
 
@@ -194,4 +210,5 @@ void quick(int *a, int left, int right){
      }
 
      fclose(fp);
+     pthread_exit(NULL);
  }
