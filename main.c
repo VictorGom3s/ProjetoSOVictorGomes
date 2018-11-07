@@ -19,6 +19,7 @@ typedef struct insercao{
 void* carrega(T_arq arquivos);
 void* ordenaVetor();
 void* insertionSort();
+void* insertionSort2();
 void* imprimeVetorPrincipal();
 void* alocaVetor(T_arq *arquivos);
 void* carregaVetorPrincipal(T_arq arquivos);
@@ -181,11 +182,12 @@ void* alocaVetorPrincipal(){
  }
 /* ---------------------------------- */
 void* ordenaVetor(){
-    int *vet, tamMiniVetor = 0;
+    int tamMiniVetor = 0;
     int i, k = 0, j = 0, th_id = 0, log, l = 0;
     pthread_t th[qntThreads];
 
     tamMiniVetor = indiceGlobal / qntThreads;
+    insertion.tam = tamMiniVetor;
 
     insertion.vet = (int *) calloc (tamMiniVetor, sizeof(int));
     printf("qntThreads: %d\n", qntThreads);
@@ -194,25 +196,52 @@ void* ordenaVetor(){
         for(i = 0; i < tamMiniVetor; i++, k++){
             insertion.vet[i] = vetorPrincipal[k];
         }
-        k++;
-        log = pthread_create(&(th[th_id]), NULL, insertionSort, NULL);
-        printf("log : %d\n", log);
+
+        pthread_create(&(th[th_id]), NULL, insertionSort, NULL);
         pthread_join(th[th_id], NULL);
         th_id++;
+
         for(i = 0; i < tamMiniVetor; i++, j++){
             vetorPrincipal[j] = insertion.vet[i];
             //printf("%d ", insertion.vet[i]);
-            //printf("\n i : %d\n", i);
         }
+        printf("\n\n");
+        l++;
     }
+
+
+    pthread_create(&(th[0]), NULL, insertionSort2, NULL);
+
     
 }
 /* ---------------------------------- */
 void* insertionSort(){
-    //insercao* in = (insercao *)insertion;
-    printf("%d ", insertion.vet[0]);
+
+    int i, j, valorAtual;
+ 
+   for( j=1; j < insertion.tam-1; j++ ) 
+   {
+      valorAtual = insertion.vet[j];
+      i = j-1;
+      
+      while(i >= 0 && insertion.vet[i] > valorAtual)
+      {
+        insertion.vet[i+1] = insertion.vet[i];
+        i--;
+      } 
+              
+      insertion.vet[i+1] = valorAtual;
+   }
+
+   /*printf("mini vetor\n");
+   for(int i = 0; i < indiceGlobal; i++){
+       printf("%d ", insertion.vet[i]);
+   }*/
+
+    /*//insercao* in = (insercao *)insertion;
+    printf("prim %d \n", insertion.vet[0]);
     int i, j, x;
-    for (i = 2; i <= insertion.tam; i++){
+    for (i = 1; i <= insertion.tam; i++){
         x = insertion.vet[i];
         j = i-1;
         insertion.vet[0] = x; 
@@ -221,11 +250,33 @@ void* insertionSort(){
             j--;
         }
         insertion.vet[j+1] = x;
-        printf("%d ", insertion.vet[i]);
-    }
+    }*/
 
-    for(int i = 0; i < insertion.tam; i++){
-        printf("%d ", insertion.vet[i]);
-    }
+    
     pthread_exit(NULL);
 }
+
+
+void* insertionSort2(){
+    int i, j, valorAtual;
+ 
+   for( j=1; j < indiceGlobal; j++ ) 
+   {
+      valorAtual = vetorPrincipal[j];
+      i = j-1;
+      
+      while(i >= 0 && vetorPrincipal[i] > valorAtual)
+      {
+        vetorPrincipal[i+1] = vetorPrincipal[i];
+        i--;
+      } 
+              
+      vetorPrincipal[i+1] = valorAtual;
+   }
+
+   /*printf("vetor principal\n");
+   for(int i = 0; i < indiceGlobal; i++){
+       printf("%d ", vetorPrincipal[i]);
+   }*/
+}
+
