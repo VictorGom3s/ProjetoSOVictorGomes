@@ -31,13 +31,10 @@ void* alocaVetorPrincipal();
     int qntArquivos = 0;
     int indiceGlobal = 0;
     int qntValoresTotal = 0;
-    //int th_id = 0;
     char arqSaida[50];
-    struct insercao insertion;
-    
+    struct insercao insertion;    
+/* ---------------------------------- */
 
-//     0       1      2       3       4         5
-//  ./multicat 16 arq1.in arq2.in arq3.in arqSaida.out
 int main(int argc, char const *argv[])
 {   
     struct timeval inicial, final;
@@ -48,15 +45,14 @@ int main(int argc, char const *argv[])
     }
     
     int threads = atoi(argv[1]);
-    qntThreads = threads;
-        
+    qntThreads = threads;        
     qntArquivos = argc - 3;
     T_arq arquivos[qntArquivos];
-    strcpy(arqSaida, argv[argc-1]);
 
-    
-   /* printf("saida: %s\n", arqSaida);
-    printf("qntArquivos: %d\n", qntArquivos);*/
+    printf("Quantidade de Threads: %d\n", qntThreads);
+    printf("Quantidade de arquivos de entrada: %d\n", qntArquivos);
+
+    strcpy(arqSaida, argv[argc-1]);
 
     /* Copiando o nome do arquivo para a struct */    
     for(int i = 0; i < qntArquivos; i++){
@@ -75,20 +71,22 @@ int main(int argc, char const *argv[])
             
     for(int i = 0; i < qntArquivos; i++){
         carregaVetorPrincipal(arquivos[i]);
-    }
-    
-   
+    }    
+
     /* ------------------ Threads ---------------------*/
     gettimeofday(&inicial, NULL);
     ordenaVetor();
     gettimeofday(&final, NULL);
 
     imprimeVetorPrincipal();
-    printf("TEMPO DE PROCESSAMENTO: %ld milisegundos\n", (final.tv_usec-inicial.tv_usec)/1000);
+    printf("TEMPO DE PROCESSAMENTO: %ld microsegundos\n", (final.tv_usec-inicial.tv_usec));
     /* ----------------------------------------------- */
     return 0;
 }
 
+/* ---------------------------------- */
+/* Aloca o vetor individual de cada arquivo lido,
+de acordo com a quantidade de valores em cada arquivo */
 void* alocaVetor(T_arq *arquivos){
     int aux;
     arquivos->qntValores = 0;
@@ -103,6 +101,8 @@ void* alocaVetor(T_arq *arquivos){
         arquivos->qntValores++;
     }
 
+    printf("Quantidade de valores do arquivo lido: %d\n", arquivos->qntValores++);
+
     arquivos->vetor = (int *)calloc(arquivos->qntValores, sizeof(int));
     if(arquivos->vetor == NULL){
         printf("Falha na alocacao!\n");
@@ -110,8 +110,9 @@ void* alocaVetor(T_arq *arquivos){
 
     fclose(fp);
 }
-
-
+/* ---------------------------------- */
+/* Carrega os vetores de cada arquivo lido, dentro da
+struct arquivos */
 void* carrega(T_arq arquivos){
     int i = 0, aux = 0;
 
@@ -125,17 +126,16 @@ void* carrega(T_arq arquivos){
         printf("Falha na alocacao!\n");
         pthread_exit(NULL);
     }
-
+    printf("Lendo arquivos de entrada.......\n");
     while(fscanf(fp, "%d", &aux) != EOF){ 
         arquivos.vetor[i] = aux;
-        //printf(" %d (%d)\n", arquivos.vetor[i], aux);
         i++;
     }
     fclose(fp);
 }
-
+/* ---------------------------------- */
+/* Carrega o vetor principal com todos os valores lidos */
 void* carregaVetorPrincipal(T_arq arquivos){
-
     FILE* fp = fopen(arquivos.nome, "r");
     if(fp == NULL){
         printf("Arquivo nao encontrado!\n");
@@ -146,16 +146,15 @@ void* carregaVetorPrincipal(T_arq arquivos){
 
     for(int i = 0; i < arquivos.qntValores; i++){
         vetorPrincipal[indiceGlobal] = arquivos.vetor[i];
-        //printf("%d (%d) ||| %d (%d)\n", vetorPrincipal[indiceGlobal], indiceGlobal, arquivos.vetor[i], i);
         indiceGlobal++;
     }    
 
     fclose(fp);
-
 }
 
 /* ---------------------------------- */
-
+/* Realiza a alocação de vetor principal de acordo com a 
+quantidade total de valores lidos */
 void* alocaVetorPrincipal(){
     if(vetorPrincipal == NULL){
         printf("Vetor nao foi alocado ainda\nAlocando...\n");
@@ -166,21 +165,24 @@ void* alocaVetorPrincipal(){
 }
 
 /* ---------------------------------- */
-
+/* Imprime o vetor ordenado em um arquivo de saída */
  void* imprimeVetorPrincipal(){
 
-     FILE *fp = fopen(arqSaida, "w");
-     if(fp == NULL){
-         printf("ERRO\n");
-     }
+    FILE *fp = fopen(arqSaida, "w");
+    if(fp == NULL){
+        printf("ERRO\n");
+    }
 
-     for(int i = 0; i < indiceGlobal; i++){
-         fprintf(fp, "%d\n", vetorPrincipal[i]);
-     }
+    printf("Escrevendo no arquivo de saida .......... \n");
 
-     fclose(fp);
+    for(int i = 0; i < indiceGlobal; i++){
+        fprintf(fp, "%d\n", vetorPrincipal[i]);
+    }
+
+    fclose(fp);
  }
 /* ---------------------------------- */
+/* Função que chama as threads para ordenar os vetores */
 void* ordenaVetor(){
     int tamMiniVetor = 0;
     int i, k = 0, j = 0, th_id = 0, log, l = 0;
@@ -190,7 +192,8 @@ void* ordenaVetor(){
     insertion.tam = tamMiniVetor;
 
     insertion.vet = (int *) calloc (tamMiniVetor, sizeof(int));
-    printf("qntThreads: %d\n", qntThreads);
+
+    printf("Ordenando vetor..........\n");
     while(l < qntThreads){
         
         for(i = 0; i < tamMiniVetor; i++, k++){
@@ -203,18 +206,16 @@ void* ordenaVetor(){
 
         for(i = 0; i < tamMiniVetor; i++, j++){
             vetorPrincipal[j] = insertion.vet[i];
-            //printf("%d ", insertion.vet[i]);
         }
         printf("\n\n");
         l++;
     }
 
-
     pthread_create(&(th[0]), NULL, insertionSort2, NULL);
-
-    
+    //pthread_join(th[0], NULL);    
 }
 /* ---------------------------------- */
+/* Ordena o vetor secundario */
 void* insertionSort(){
 
     int i, j, valorAtual;
@@ -232,31 +233,12 @@ void* insertionSort(){
               
       insertion.vet[i+1] = valorAtual;
    }
-
-   /*printf("mini vetor\n");
-   for(int i = 0; i < indiceGlobal; i++){
-       printf("%d ", insertion.vet[i]);
-   }*/
-
-    /*//insercao* in = (insercao *)insertion;
-    printf("prim %d \n", insertion.vet[0]);
-    int i, j, x;
-    for (i = 1; i <= insertion.tam; i++){
-        x = insertion.vet[i];
-        j = i-1;
-        insertion.vet[0] = x; 
-        while (x < insertion.vet[j]){
-            insertion.vet[j+1] = insertion.vet[j];
-            j--;
-        }
-        insertion.vet[j+1] = x;
-    }*/
-
     
     pthread_exit(NULL);
 }
 
-
+/* ---------------------------------- */
+/* Ordena o vetor principal */
 void* insertionSort2(){
     int i, j, valorAtual;
  
@@ -273,10 +255,5 @@ void* insertionSort2(){
               
       vetorPrincipal[i+1] = valorAtual;
    }
-
-   /*printf("vetor principal\n");
-   for(int i = 0; i < indiceGlobal; i++){
-       printf("%d ", vetorPrincipal[i]);
-   }*/
+   pthread_exit(NULL);
 }
-
