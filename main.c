@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <time.h>
 #include <sys/time.h>
 
 typedef struct arquivo{
@@ -37,13 +38,12 @@ void* alocaVetorPrincipal();
 
 int main(int argc, char const *argv[])
 {   
-    struct timeval inicial, final;
     /* verificando quantidade de parametros */
     if(argc < 3){
         printf("Quantidade de parametros invalida\n");
         return 0;
     }
-    
+    time_t inicio,fim;
     int threads = atoi(argv[1]);
     qntThreads = threads;        
     qntArquivos = argc - 3;
@@ -74,12 +74,12 @@ int main(int argc, char const *argv[])
     }    
 
     /* ------------------ Threads ---------------------*/
-    gettimeofday(&inicial, NULL);
+    inicio = time(NULL);
     ordenaVetor();
-    gettimeofday(&final, NULL);
+    fim = time(NULL);
 
     imprimeVetorPrincipal();
-    printf("TEMPO DE PROCESSAMENTO: %ld microsegundos\n", (final.tv_usec-inicial.tv_usec));
+    printf("TEMPO DE PROCESSAMENTO: %lds\n",fim-inicio);
     /* ----------------------------------------------- */
     return 0;
 }
@@ -142,7 +142,7 @@ void* carregaVetorPrincipal(T_arq arquivos){
         pthread_exit(NULL);
     }
 
-    printf("-------------------------------------------\n");
+    printf("Carregando vetor principal....\n");
 
     for(int i = 0; i < arquivos.qntValores; i++){
         vetorPrincipal[indiceGlobal] = arquivos.vetor[i];
