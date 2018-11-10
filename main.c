@@ -257,3 +257,4 @@ void* insertionSort2(){
    }
    pthread_exit(NULL);
 }
+/* Fim do programa */
