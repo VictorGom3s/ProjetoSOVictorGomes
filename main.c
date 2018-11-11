@@ -12,19 +12,19 @@ typedef struct arquivo{
     int *vetor;
 }T_arq;
 
-typedef struct insercao{
-    int *vet;
-    int tam;
-}insercao;
+struct T_quickSort{
+    int id_thread;
+    int left;
+    int right;
+};
 
 void* carrega(T_arq arquivos);
-void* ordenaVetor();
-void* insertionSort();
-void* insertionSort2();
+void* ordenaVetor(struct T_quickSort s_quick);
 void* imprimeVetorPrincipal();
 void* alocaVetor(T_arq *arquivos);
 void* carregaVetorPrincipal(T_arq arquivos);
 void* alocaVetorPrincipal();
+void* quick_sort(void * s_quick);
 
 /* Variaveis globais */
     int *vetorPrincipal = NULL;
@@ -32,8 +32,7 @@ void* alocaVetorPrincipal();
     int qntArquivos = 0;
     int indiceGlobal = 0;
     int qntValoresTotal = 0;
-    char arqSaida[50];
-    struct insercao insertion;    
+    char arqSaida[50];    
 /* ---------------------------------- */
 
 int main(int argc, char const *argv[])
@@ -48,6 +47,7 @@ int main(int argc, char const *argv[])
     qntThreads = threads;        
     qntArquivos = argc - 3;
     T_arq arquivos[qntArquivos];
+    struct T_quickSort s_quick;
 
     printf("Quantidade de Threads: %d\n", qntThreads);
     printf("Quantidade de arquivos de entrada: %d\n", qntArquivos);
@@ -73,9 +73,11 @@ int main(int argc, char const *argv[])
         carregaVetorPrincipal(arquivos[i]);
     }    
 
+    s_quick.left = 0;
+    s_quick.right = 0;
     /* ------------------ Threads ---------------------*/
     inicio = time(NULL);
-    ordenaVetor();
+    ordenaVetor(s_quick);
     fim = time(NULL);
 
     imprimeVetorPrincipal();
@@ -175,7 +177,7 @@ void* alocaVetorPrincipal(){
 
     printf("Escrevendo no arquivo de saida .......... \n");
 
-    for(int i = 0; i < indiceGlobal; i++){
+    for(int i = 0; i < indiceGlobal-1; i++){
         fprintf(fp, "%d\n", vetorPrincipal[i]);
     }
 
@@ -183,78 +185,83 @@ void* alocaVetorPrincipal(){
  }
 /* ---------------------------------- */
 /* Função que chama as threads para ordenar os vetores */
-void* ordenaVetor(){
-    int tamMiniVetor = 0;
-    int i, k = 0, j = 0, th_id = 0, log, l = 0;
-    pthread_t th[qntThreads];
+void* ordenaVetor(struct T_quickSort s_quick){
+    int i, k = 0, j = 0, th_id = 0, l = 0;
+    pthread_t th[qntThreads-1];
+   
 
-    tamMiniVetor = indiceGlobal / qntThreads;
-    insertion.tam = tamMiniVetor;
+   while(qntThreads >= 2){
+        int tam = (indiceGlobal / qntThreads);
 
-    insertion.vet = (int *) calloc (tamMiniVetor, sizeof(int));
+        s_quick.left = 0;
+        s_quick.right = (tam-1);
+        th_id = 0;
 
-    printf("Ordenando vetor..........\n");
-    while(l < qntThreads){
-        
-        for(i = 0; i < tamMiniVetor; i++, k++){
-            insertion.vet[i] = vetorPrincipal[k];
+        while(l < qntThreads){
+            printf("qntThreads = %d\n", qntThreads);
+            printf("th_id = %d\n", th_id);
+            s_quick.id_thread = th_id;
+            pthread_create(&(th[th_id]), NULL, quick_sort, (void *)&s_quick);
+            printf("A thread %d está ordenando o vetor neste momento.\n", th_id);
+            //pthread_join(th[th_id], NULL); // <- ERRO
+            th_id++;            
+
+            printf("tam = %d\n", tam);
+            printf("left = %d\n", s_quick.left);
+            printf("right = %d\n", s_quick.right);
+
+            printf("\n\n");
+            s_quick.left += tam;
+            s_quick.right += tam;
+            l++;    
+        }
+        printf("1\n");
+        for(i = 0; i < th_id; i++){
+            pthread_join(th[i], NULL);
         }
 
-        pthread_create(&(th[th_id]), NULL, insertionSort, NULL);
-        pthread_join(th[th_id], NULL);
-        th_id++;
+        qntThreads /= 2;
+        l = 0;
+   }
 
-        for(i = 0; i < tamMiniVetor; i++, j++){
-            vetorPrincipal[j] = insertion.vet[i];
-        }
-        printf("\n\n");
-        l++;
-    }
-
-    pthread_create(&(th[0]), NULL, insertionSort2, NULL);
-    //pthread_join(th[0], NULL);    
+   if(qntThreads < 2){
+        s_quick.left = 0;
+        s_quick.right = (indiceGlobal-1);
+        pthread_create(&(th[0]), NULL, quick_sort, (void *)&s_quick);
+        pthread_join(th[0], NULL);
+   }
+         
 }
 /* ---------------------------------- */
-/* Ordena o vetor secundario */
-void* insertionSort(){
+// Quick sort function
+void* quick_sort(void * s_quick) {
+    int i, j, x, y;
 
-    int i, j, valorAtual;
- 
-   for( j=1; j < insertion.tam-1; j++ ) 
-   {
-      valorAtual = insertion.vet[j];
-      i = j-1;
-      
-      while(i >= 0 && insertion.vet[i] > valorAtual)
-      {
-        insertion.vet[i+1] = insertion.vet[i];
-        i--;
-      } 
-              
-      insertion.vet[i+1] = valorAtual;
-   }
+    struct T_quickSort *quick = (struct T_quickSort *)s_quick;
     
-    pthread_exit(NULL);
+    i = quick->left;
+    j = quick->right;
+    x = vetorPrincipal[(quick->left + quick->right) / 2];
+     
+    while(i <= j) {
+        while(vetorPrincipal[i] < x && i < quick->right) {
+            i++;
+        }
+        while(vetorPrincipal[j] > x && j > quick->left) {
+            j--;
+        }
+        if(i <= j) {
+            y = vetorPrincipal[i];
+            vetorPrincipal[i] = vetorPrincipal[j];
+            vetorPrincipal[j] = y;
+            i++;
+            j--;
+        }
+    }     
+    if(j > quick->left) {
+        quick_sort(quick);
+    }
+    if(i < quick->right) {
+        quick_sort(quick);
+    }
 }
-
-/* ---------------------------------- */
-/* Ordena o vetor principal */
-void* insertionSort2(){
-    int i, j, valorAtual;
- 
-   for( j=1; j < indiceGlobal; j++ ) 
-   {
-      valorAtual = vetorPrincipal[j];
-      i = j-1;
-      
-      while(i >= 0 && vetorPrincipal[i] > valorAtual)
-      {
-        vetorPrincipal[i+1] = vetorPrincipal[i];
-        i--;
-      } 
-              
-      vetorPrincipal[i+1] = valorAtual;
-   }
-   pthread_exit(NULL);
-}
-/* Fim do programa */
