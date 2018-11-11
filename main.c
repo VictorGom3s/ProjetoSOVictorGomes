@@ -72,9 +72,6 @@ int main(int argc, char const *argv[])
     for(int i = 0; i < qntArquivos; i++){
         carregaVetorPrincipal(arquivos[i]);
     }    
-
-    s_quick.left = 0;
-    s_quick.right = 0;
     /* ------------------ Threads ---------------------*/
     inicio = time(NULL);
     ordenaVetor(s_quick);
@@ -192,18 +189,14 @@ void* ordenaVetor(struct T_quickSort s_quick){
 
    while(qntThreads >= 2){
         int tam = (indiceGlobal / qntThreads);
-
         s_quick.left = 0;
         s_quick.right = (tam-1);
         th_id = 0;
 
         while(l < qntThreads){
-            printf("qntThreads = %d\n", qntThreads);
-            printf("th_id = %d\n", th_id);
             s_quick.id_thread = th_id;
             pthread_create(&(th[th_id]), NULL, quick_sort, (void *)&s_quick);
             printf("A thread %d está ordenando o vetor neste momento.\n", th_id);
-            //pthread_join(th[th_id], NULL); // <- ERRO
             th_id++;            
 
             printf("tam = %d\n", tam);
@@ -213,17 +206,17 @@ void* ordenaVetor(struct T_quickSort s_quick){
             printf("\n\n");
             s_quick.left += tam;
             s_quick.right += tam;
-            l++;    
+            l++;
         }
-        printf("1\n");
+        printf("Fim do ciclo\n");
         for(i = 0; i < th_id; i++){
             pthread_join(th[i], NULL);
         }
-
         qntThreads /= 2;
         l = 0;
    }
-
+    /* Todas as threads já ordenaram parte do vetor
+    agora, a thread 0 deve percorrer ordenando o que tiver desordenado */ 
    if(qntThreads < 2){
         s_quick.left = 0;
         s_quick.right = (indiceGlobal-1);
