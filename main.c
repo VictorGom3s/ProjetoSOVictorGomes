@@ -38,17 +38,20 @@ void * preparaQsort(void * s_quick);
 
 int main(int argc, char const *argv[])
 {   
+    struct timeval inicio, fim; //Variáveis para calcular o tempo de execução;
+    int threads = atoi(argv[1]);
+    double tempoLeitura, tempoThreads, tempoEscrita, tempoTotal;
+    struct T_quickSort s_quick;
+
     /* verificando quantidade de parametros */
     if(argc < 3){
         printf("Quantidade de parametros invalida\n");
         return 0;
-    }
-    time_t inicio,fim;
-    int threads = atoi(argv[1]);
+    }    
+
     qntThreads = threads;        
     qntArquivos = argc - 3;
     T_arq arquivos[qntArquivos];
-    struct T_quickSort s_quick;
 
     printf("Quantidade de Threads: %d\n", qntThreads);
     printf("Quantidade de arquivos de entrada: %d\n", qntArquivos);
@@ -59,6 +62,7 @@ int main(int argc, char const *argv[])
     for(int i = 0; i < qntArquivos; i++){
         strcpy(arquivos[i].nome, argv[i+2]);
     }
+    /* ---------- Alocação de vetores------------ */
     for(int i = 0; i < qntArquivos; i++){
         alocaVetor(&arquivos[i]);
     }
@@ -66,21 +70,39 @@ int main(int argc, char const *argv[])
         qntValoresTotal += arquivos[i].qntValores;
     }
     alocaVetorPrincipal();
+    /* ------------ Fim das Alocações ------------- */
+
+    /* ---------- Leitura de Arquivos ---------------*/
+    gettimeofday(&inicio, NULL); 
     for(int i = 0; i < qntArquivos; i++){
         carrega(arquivos[i]);
     }
             
     for(int i = 0; i < qntArquivos; i++){
         carregaVetorPrincipal(arquivos[i]);
-    }    
-    /* ------------------ Threads ---------------------*/
-    inicio = time(NULL);
-    ordenaVetor(s_quick);
-    fim = time(NULL);
+    }
+    gettimeofday(&fim, NULL);
+    tempoLeitura = (double)(fim.tv_usec-inicio.tv_usec)/1000000+(double)(fim.tv_sec-inicio.tv_sec);
+    /* ------------- Fim da Leitura -------------------*/    
 
+    /* ------------------ Threads ---------------------*/
+    gettimeofday(&inicio, NULL); 
+    ordenaVetor(s_quick);
+    gettimeofday(&fim, NULL);
+    tempoThreads = (double)(fim.tv_usec-inicio.tv_usec)/1000000+(double)(fim.tv_sec-inicio.tv_sec);
+    /* -----------------Fim das Threads----------------- */
+
+    /* ------------------ Impressão ---------------------*/
+    gettimeofday(&inicio, NULL);
     imprimeVetorPrincipal();
-    printf("TEMPO DE PROCESSAMENTO: %lds\n",fim-inicio);
-    /* ----------------------------------------------- */
+    gettimeofday(&fim, NULL);
+    tempoEscrita = (double)(fim.tv_usec-inicio.tv_usec)/1000000+(double)(fim.tv_sec-inicio.tv_sec);
+    /* ------------------ --------------------------------*/
+    tempoTotal = tempoEscrita + tempoLeitura + tempoThreads;
+    printf("\nTEMPO TOTAL DE PROCESSAMENTO: %fs\n", tempoTotal);
+    printf("Tempo gasto lendo arquivos: %fs\n", tempoLeitura);
+    printf("Tempo gasto pelas threads: %fs\n", tempoThreads);
+    printf("Tempo gasto escrevendo no arquivo de saida: %fs\n", tempoEscrita);
     return 0;
 }
 
@@ -229,7 +251,8 @@ void* ordenaVetor(struct T_quickSort s_quick){
         pthread_join(th[0], NULL);
     }         
 }
-
+/* Função intermediaria entre as threads e o quicksort
+que atribui as variaveis para o bom funcionamento da ordenação */
 void * preparaQsort(void * s_quick){
     struct T_quickSort *quick = (struct T_quickSort *)s_quick;
 
@@ -273,9 +296,3 @@ int quick_sort(int *vetorPrincipal, int left, int right) {
         quick_sort(vetorPrincipal, i, right);
     }
 }
-
-/*void* naoFazNada(void * s_quick){
-    struct T_quickSort *quick = (struct T_quickSort *)s_quick;
-    printf("\nEsta funcao nao faz nada e foi executada pela thread %d\n\n", quick->id_thread);
-    pthread_exit(NULL);
-}*/

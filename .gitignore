@@ -54,3 +54,6 @@ dkms.conf
 # Generated Files
 *.in
 *.out
+
+# Specific File
+multicat
