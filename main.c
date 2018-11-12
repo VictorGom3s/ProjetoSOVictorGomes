@@ -24,7 +24,8 @@ void* imprimeVetorPrincipal();
 void* alocaVetor(T_arq *arquivos);
 void* carregaVetorPrincipal(T_arq arquivos);
 void* alocaVetorPrincipal();
-void* quick_sort(void * s_quick);
+int quick_sort(int *vetorPrincipal, int left, int right);
+void * preparaQsort(void * s_quick);
 
 /* Variaveis globais */
     int *vetorPrincipal = NULL;
@@ -174,7 +175,7 @@ void* alocaVetorPrincipal(){
 
     printf("Escrevendo no arquivo de saida .......... \n");
 
-    for(int i = 0; i < indiceGlobal-1; i++){
+    for(int i = 0; i < (indiceGlobal-1); i++){
         fprintf(fp, "%d\n", vetorPrincipal[i]);
     }
 
@@ -185,7 +186,7 @@ void* alocaVetorPrincipal(){
 void* ordenaVetor(struct T_quickSort s_quick){
     int i, k = 0, j = 0, th_id = 0, l = 0;
     pthread_t th[qntThreads-1];
-   
+    printf("Foram criadas %d threads\n", qntThreads);   
 
    while(qntThreads >= 2){
         int tam = (indiceGlobal / qntThreads);
@@ -195,8 +196,9 @@ void* ordenaVetor(struct T_quickSort s_quick){
 
         while(l < qntThreads){
             s_quick.id_thread = th_id;
-            pthread_create(&(th[th_id]), NULL, quick_sort, (void *)&s_quick);
-            printf("A thread %d está ordenando o vetor neste momento.\n", th_id);
+            if(pthread_create(&(th[th_id]), NULL, preparaQsort, (void *)&s_quick) == 0){
+                printf("A thread %d está ordenando o vetor neste momento.\n", th_id);
+            }
             th_id++;            
 
             printf("tam = %d\n", tam);
@@ -211,36 +213,49 @@ void* ordenaVetor(struct T_quickSort s_quick){
         printf("Fim do ciclo\n");
         for(i = 0; i < th_id; i++){
             pthread_join(th[i], NULL);
+            printf("Thread %d terminou\n", i);
         }
         qntThreads /= 2;
         l = 0;
    }
     /* Todas as threads já ordenaram parte do vetor
     agora, a thread 0 deve percorrer ordenando o que tiver desordenado */ 
-   if(qntThreads < 2){
+    if(qntThreads < 2){
         s_quick.left = 0;
         s_quick.right = (indiceGlobal-1);
-        pthread_create(&(th[0]), NULL, quick_sort, (void *)&s_quick);
+        printf("Estou aqui 2\n");
+        pthread_create(&(th[0]), NULL, preparaQsort, (void *)&s_quick);
+        printf("Thread %d terminou\n", 0);
         pthread_join(th[0], NULL);
-   }
-         
+    }         
 }
+
+void * preparaQsort(void * s_quick){
+    struct T_quickSort *quick = (struct T_quickSort *)s_quick;
+
+    int left, right;
+
+    left = quick->left;
+    right = quick->right;
+
+    quick_sort(vetorPrincipal, left, right);
+    pthread_exit(NULL);
+}
+
 /* ---------------------------------- */
 // Quick sort function
-void* quick_sort(void * s_quick) {
+int quick_sort(int *vetorPrincipal, int left, int right) {
     int i, j, x, y;
-
-    struct T_quickSort *quick = (struct T_quickSort *)s_quick;
     
-    i = quick->left;
-    j = quick->right;
-    x = vetorPrincipal[(quick->left + quick->right) / 2];
+    i = left;
+    j = right;
+    x = vetorPrincipal[(left + right) / 2];
      
     while(i <= j) {
-        while(vetorPrincipal[i] < x && i < quick->right) {
+        while(vetorPrincipal[i] < x && i < right) {
             i++;
         }
-        while(vetorPrincipal[j] > x && j > quick->left) {
+        while(vetorPrincipal[j] > x && j > left) {
             j--;
         }
         if(i <= j) {
@@ -251,10 +266,16 @@ void* quick_sort(void * s_quick) {
             j--;
         }
     }     
-    if(j > quick->left) {
-        quick_sort(quick);
+    if(j > left) {
+        quick_sort(vetorPrincipal, left, j);
     }
-    if(i < quick->right) {
-        quick_sort(quick);
+    if(i < right) {
+        quick_sort(vetorPrincipal, i, right);
     }
 }
+
+/*void* naoFazNada(void * s_quick){
+    struct T_quickSort *quick = (struct T_quickSort *)s_quick;
+    printf("\nEsta funcao nao faz nada e foi executada pela thread %d\n\n", quick->id_thread);
+    pthread_exit(NULL);
+}*/
