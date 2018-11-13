@@ -5,19 +5,24 @@
 #include <time.h>
 #include <sys/time.h>
 
-typedef struct arquivo{
+/* Struct que armazena informações de cada arquivo */
+typedef struct arquivo{ 
     char nome[50];
     int pos;
     int qntValores;
     int *vetor;
 }T_arq;
 
+
+/* Struct que armazena informações a serem passadas pelas
+threads a funcao quicksort */
 struct T_quickSort{
     int id_thread;
     int left;
     int right;
 };
 
+/* ----------- Funcoes ------------- */
 void* carrega(T_arq arquivos);
 void* ordenaVetor(struct T_quickSort s_quick);
 void* imprimeVetorPrincipal();
@@ -27,7 +32,7 @@ void* alocaVetorPrincipal();
 int quick_sort(int *vetorPrincipal, int left, int right);
 void * preparaQsort(void * s_quick);
 
-/* Variaveis globais */
+/* -------- Variaveis globais  --------*/
     int *vetorPrincipal = NULL;
     int qntThreads = 0;
     int qntArquivos = 0;
@@ -39,7 +44,7 @@ void * preparaQsort(void * s_quick);
 int main(int argc, char const *argv[])
 {   
     struct timeval inicio, fim; //Variáveis para calcular o tempo de execução;
-    int threads = atoi(argv[1]);
+    int threads = atoi(argv[1]); // pegando o numero de threads
     double tempoLeitura, tempoThreads, tempoEscrita, tempoTotal;
     struct T_quickSort s_quick;
 
@@ -49,14 +54,14 @@ int main(int argc, char const *argv[])
         return 0;
     }    
 
-    qntThreads = threads;        
-    qntArquivos = argc - 3;
+    qntThreads = threads; // Passando o numero de threads para uma var global        
+    qntArquivos = argc - 3; // Pegando num. total de arquivos lidos
     T_arq arquivos[qntArquivos];
 
     printf("Quantidade de Threads: %d\n", qntThreads);
     printf("Quantidade de arquivos de entrada: %d\n", qntArquivos);
 
-    strcpy(arqSaida, argv[argc-1]);
+    strcpy(arqSaida, argv[argc-1]); //Pegando nome do arquivo de saida
 
     /* Copiando o nome do arquivo para a struct */    
     for(int i = 0; i < qntArquivos; i++){
@@ -207,9 +212,13 @@ void* alocaVetorPrincipal(){
 /* Função que chama as threads para ordenar os vetores */
 void* ordenaVetor(struct T_quickSort s_quick){
     int i, k = 0, j = 0, th_id = 0, l = 0;
-    pthread_t th[qntThreads-1];
+    pthread_t th[qntThreads-1]; //vetor de threads
     printf("Foram criadas %d threads\n", qntThreads);   
-
+    
+    /* O vetor principal é dividido de acordo com o numero de threads, parq que cada thread
+    fique responsavel por uma parte da ordenação. A cada ciclo, o numero de threads cai pela metade,
+    e a ordenação é feita novamente. Segue desta forma até restar somente uma thread, que percorre
+    ordenando o que ainda estiver desordenado */
    while(qntThreads >= 2){
         int tam = (indiceGlobal / qntThreads);
         s_quick.left = 0;
@@ -241,14 +250,13 @@ void* ordenaVetor(struct T_quickSort s_quick){
         l = 0;
    }
     /* Todas as threads já ordenaram parte do vetor
-    agora, a thread 0 deve percorrer ordenando o que tiver desordenado */ 
+    agora, a thread 0 deve percorrer ordenando o que estiver desordenado */ 
     if(qntThreads < 2){
         s_quick.left = 0;
         s_quick.right = (indiceGlobal-1);
-        printf("Estou aqui 2\n");
         pthread_create(&(th[0]), NULL, preparaQsort, (void *)&s_quick);
-        printf("Thread %d terminou\n", 0);
         pthread_join(th[0], NULL);
+        printf("Thread %d terminou\n", 0);
     }         
 }
 /* Função intermediaria entre as threads e o quicksort
