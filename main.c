@@ -29,8 +29,8 @@ void* imprimeVetorPrincipal();
 void* alocaVetor(T_arq *arquivos);
 void* carregaVetorPrincipal(T_arq arquivos);
 void* alocaVetorPrincipal();
-int quick_sort(int *vetorPrincipal, int left, int right);
 void * preparaQsort(void * s_quick);
+int comparaCrescente(const void* a, const void* b); 
 
 /* -------- Variaveis globais  --------*/
     int *vetorPrincipal = NULL;
@@ -104,10 +104,9 @@ int main(int argc, char const *argv[])
     tempoEscrita = (double)(fim.tv_usec-inicio.tv_usec)/1000000+(double)(fim.tv_sec-inicio.tv_sec);
     /* ------------------ --------------------------------*/
     tempoTotal = tempoEscrita + tempoLeitura + tempoThreads;
-    printf("\nTEMPO TOTAL DE PROCESSAMENTO: %fs\n", tempoTotal);
-    printf("Tempo gasto lendo arquivos: %fs\n", tempoLeitura);
-    printf("Tempo gasto pelas threads: %fs\n", tempoThreads);
-    printf("Tempo gasto escrevendo no arquivo de saida: %fs\n", tempoEscrita);
+    printf("\nTEMPO TOTAL DE PROCESSAMENTO: %fs\n", tempoThreads);
+    printf("Tempo total de execução (Leitura, Processamento e Escrita): %fs\n", tempoTotal);
+    pthread_exit(NULL);
     return 0;
 }
 
@@ -174,8 +173,7 @@ void* carregaVetorPrincipal(T_arq arquivos){
     for(int i = 0; i < arquivos.qntValores; i++){
         vetorPrincipal[indiceGlobal] = arquivos.vetor[i];
         indiceGlobal++;
-    }    
-
+    }
     fclose(fp);
 }
 
@@ -231,20 +229,13 @@ void* ordenaVetor(struct T_quickSort s_quick){
                 printf("A thread %d está ordenando o vetor neste momento.\n", th_id);
             }
             th_id++;            
-
-            printf("tam = %d\n", tam);
-            printf("left = %d\n", s_quick.left);
-            printf("right = %d\n", s_quick.right);
-
-            printf("\n\n");
             s_quick.left += tam;
             s_quick.right += tam;
             l++;
         }
-        printf("Fim do ciclo\n");
+        /* Fim do Ciclo */
         for(i = 0; i < th_id; i++){
             pthread_join(th[i], NULL);
-            printf("Thread %d terminou\n", i);
         }
         qntThreads /= 2;
         l = 0;
@@ -256,7 +247,6 @@ void* ordenaVetor(struct T_quickSort s_quick){
         s_quick.right = (indiceGlobal-1);
         pthread_create(&(th[0]), NULL, preparaQsort, (void *)&s_quick);
         pthread_join(th[0], NULL);
-        printf("Thread %d terminou\n", 0);
     }         
 }
 /* Função intermediaria entre as threads e o quicksort
@@ -264,43 +254,25 @@ que atribui as variaveis para o bom funcionamento da ordenação */
 void * preparaQsort(void * s_quick){
     struct T_quickSort *quick = (struct T_quickSort *)s_quick;
 
-    int left, right;
-
+    int left, right, tam;
+    
+    tam = (quick->right)-(quick->left);
     left = quick->left;
     right = quick->right;
 
-    quick_sort(vetorPrincipal, left, right);
+    /* Função quicksort da biblioteca stdlib.h */
+    qsort(vetorPrincipal, tam, sizeof(int), comparaCrescente);
+
     pthread_exit(NULL);
 }
 
 /* ---------------------------------- */
-// Quick sort function
-int quick_sort(int *vetorPrincipal, int left, int right) {
-    int i, j, x, y;
-    
-    i = left;
-    j = right;
-    x = vetorPrincipal[(left + right) / 2];
-     
-    while(i <= j) {
-        while(vetorPrincipal[i] < x && i < right) {
-            i++;
-        }
-        while(vetorPrincipal[j] > x && j > left) {
-            j--;
-        }
-        if(i <= j) {
-            y = vetorPrincipal[i];
-            vetorPrincipal[i] = vetorPrincipal[j];
-            vetorPrincipal[j] = y;
-            i++;
-            j--;
-        }
-    }     
-    if(j > left) {
-        quick_sort(vetorPrincipal, left, j);
-    }
-    if(i < right) {
-        quick_sort(vetorPrincipal, i, right);
-    }
+/* Função que define como será a comparação da função qsort() */
+int comparaCrescente(const void* a, const void* b){
+    if(*(int *)a == *(int *)b) return 0;
+    else
+        if(*(int*)a < *(int *)b) return -1;
+        else
+            return 1;
 }
+/* ---------------------------------- */
